@@ -21,13 +21,13 @@ router.route('/create').post((req, res) => {
     })
 
     newFlight.save()
-        .then(() => { res.json('Flight Created.') })
+        .then((flight) => res.json(flight))
         .catch(err => { res.status(400).json('Error ' + err) })
 });
 
 router.route('/:id').delete((req, res) => {
     Flight.findByIdAndDelete(req.params.id)
-        .then(() => res.json('Flight deleted.'))
+        .then((flight) => res.json(flight))
         .catch(err => res.status(400).json('Error ' + err))
 });
 
@@ -35,7 +35,7 @@ router.route('/:id').patch((req, res) => {
     const updateObject = req.body;
     const id = req.params.id
     Flight.updateOne({ _id: Object(id) }, { $set: updateObject })
-        .then(() => res.json('Flight updated.'))
+        .then((flight) => res.json(flight))
         .catch(err => res.status(400).json('Error ' + err))
 });
 
