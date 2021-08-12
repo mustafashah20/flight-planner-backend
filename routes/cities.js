@@ -17,13 +17,13 @@ router.route('/create').post((req, res) => {
     })
 
     newCity.save()
-        .then(() => { res.json('City Created.') })
+        .then((city) => { res.json(city) })
         .catch(err => { res.status(400).json('Error ' + err) })
 });
 
 router.route('/:id').delete((req, res) => {
     City.findByIdAndDelete(req.params.id)
-        .then(() => res.json('City deleted.'))
+        .then((city) => { res.json(city) })
         .catch(err => res.status(400).json('Error ' + err))
 });
 
@@ -31,7 +31,7 @@ router.route('/:id').patch((req, res) => {
     const updateObject = req.body;
     const id = req.params.id
     City.updateOne({ _id: Object(id) }, { $set: updateObject })
-        .then(() => res.json('City updated.'))
+        .then((city) => { res.json(city) })
         .catch(err => res.status(400).json('Error ' + err))
 });
 
