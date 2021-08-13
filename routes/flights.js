@@ -13,8 +13,10 @@ router.route('/').get((req, res) => {
 })
 
 router.route('/plan').get(async (req, res) => {
-    const origin = req.body.origin;
-    const destination = req.body.destination;
+    const data = decodeURI(req.query.data);
+    const payload = JSON.parse(data);
+    const origin = payload.origin;
+    const destination = payload.destination
     const shortestPath = global.route.path(origin, destination);
     const flightPlan = await getFlightPlan(shortestPath);
     res.json(flightPlan);
