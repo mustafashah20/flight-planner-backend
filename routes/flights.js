@@ -12,6 +12,14 @@ router.route('/').get((req, res) => {
         .catch(err => res.status(400).json('Error ' + err))
 })
 
+router.route('/:id').get((req, res) => {
+    Flight.findOne({
+        _id: req.params.id
+    })
+        .then((flight) => res.json(flight))
+        .catch(err => res.status(400).json('Error ' + err))
+})
+
 router.route('/plan').get(async (req, res) => {
     const data = decodeURI(req.query.data);
     const payload = JSON.parse(data);
@@ -122,9 +130,10 @@ router.route('/:id').delete((req, res) => {
 });
 
 router.route('/:id').patch((req, res) => {
-    const updateObject = req.body;
-    const id = req.params.id
-    Flight.updateOne({ _id: Object(id) }, { $set: updateObject })
+    const query = { _id: req.params.id }
+    const update = { $set: req.body };
+    const options = { new: true };
+    Flight.findOneAndUpdate(query, update, options)
         .then((flight) => {
             updateGraph(flight);
             res.json(flight)
