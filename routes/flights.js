@@ -20,11 +20,9 @@ router.route('/:id').get((req, res) => {
         .catch(err => res.status(400).json('Error ' + err))
 })
 
-router.route('/plan').get(async (req, res) => {
-    const data = decodeURI(req.query.data);
-    const payload = JSON.parse(data);
-    const origin = payload.origin;
-    const destination = payload.destination
+router.route('/plan/:origin/:destination').get(async (req, res) => {
+    const origin = req.params.origin;
+    const destination = req.params.destination;
     const shortestPath = global.graph.path(origin, destination);
     const flightPlan = await getFlightPlan(shortestPath);
     res.json(flightPlan);
@@ -96,7 +94,6 @@ const updateGraph = (flight) => {
             if (neighbours.size > 0) {
                 global.graph.addNode(flight.origin, neighbours);
             }
-            console.log(global.graph);
         })
 }
 
