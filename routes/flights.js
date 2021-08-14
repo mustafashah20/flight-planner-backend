@@ -4,7 +4,7 @@ const Graph = require('node-dijkstra');
 let City = require('../models/cities.model');
 let Flight = require('../models/flights.model');
 
-global.route;
+global.graph;
 
 router.route('/').get((req, res) => {
     Flight.find()
@@ -17,7 +17,7 @@ router.route('/plan').get(async (req, res) => {
     const payload = JSON.parse(data);
     const origin = payload.origin;
     const destination = payload.destination
-    const shortestPath = global.route.path(origin, destination);
+    const shortestPath = global.graph.path(origin, destination);
     const flightPlan = await getFlightPlan(shortestPath);
     res.json(flightPlan);
 
@@ -34,10 +34,15 @@ const getFlightPlan = async (shortestPath) => {
             Flight.find({
                 origin: shortestPath[i],
                 destination: shortestPath[j]
-            }).then((flight) => {
-                flightPlan.push(flight[0]);
-                resolve()
             })
+                .then((flight) => {
+                    flightPlan.push(flight[0]);
+                    resolve();
+                })
+                .catch((err) => {
+                    console.log("Error finding flights" + err);
+                    reject();
+                })
         }))
     }
     await Promise.all(promiseArray);
@@ -69,7 +74,22 @@ const generateGraph = (cities, flights) => {
             tempGraph.set(cities[i].name, neighbours);
         }
     }
-    global.route = new Graph(tempGraph);
+    global.graph = new Graph(tempGraph);
+}
+
+const updateGraph = (flight) => {
+    Flight.find({ origin: flight.origin })
+        .then((flights) => {
+            global.graph.removeNode(flight.origin);
+            const neighbours = new Map();
+            for (let j = 0; j < flights.length; j++) {
+                neighbours.set(flights[j].destination, flights[j].cost);
+            }
+            if (neighbours.size > 0) {
+                global.graph.addNode(flight.origin, neighbours);
+            }
+            console.log(global.graph);
+        })
 }
 
 router.route('/create').post((req, res) => {
@@ -86,7 +106,7 @@ router.route('/create').post((req, res) => {
 
     newFlight.save()
         .then((flight) => {
-            getCitiesFlight();
+            updateGraph(flight);
             res.json(flight);
         })
         .catch(err => { res.status(400).json('Error ' + err) })
@@ -94,7 +114,10 @@ router.route('/create').post((req, res) => {
 
 router.route('/:id').delete((req, res) => {
     Flight.findByIdAndDelete(req.params.id)
-        .then((flight) => res.json(flight))
+        .then((flight) => {
+            updateGraph(flight);
+            res.json(flight)
+        })
         .catch(err => res.status(400).json('Error ' + err))
 });
 
@@ -102,7 +125,10 @@ router.route('/:id').patch((req, res) => {
     const updateObject = req.body;
     const id = req.params.id
     Flight.updateOne({ _id: Object(id) }, { $set: updateObject })
-        .then((flight) => res.json(flight))
+        .then((flight) => {
+            updateGraph(flight);
+            res.json(flight)
+        })
         .catch(err => res.status(400).json('Error ' + err))
 });
 
