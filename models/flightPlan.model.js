@@ -12,6 +12,7 @@ const flightPlanSchema = new Schema({
         destination: { type: String, requiured: true },
         cost: { type: Number, required: true },
     }],
+    version: { type: Number, required: true },
 });
 
 const FlightPlan = mongoose.model('FlightPlan', flightPlanSchema);

@@ -6,6 +6,7 @@ let Flight = require('../models/flights.model');
 let FlightPlan = require('../models/flightPlan.model');
 
 global.graph;
+global.graphVersion = 0;
 
 router.route('/').get((req, res) => {
     Flight.find()
@@ -24,36 +25,50 @@ router.route('/:id').get((req, res) => {
 router.route('/plan/:origin/:destination').get(async (req, res) => {
     const reqOrigin = req.params.origin;
     const reqDestination = req.params.destination;
+
     FlightPlan.findOne({ origin: reqOrigin, destination: reqDestination })
         .then(async (flightPlan) => {
             if (flightPlan) {
-                res.json(flightPlan.plan);
-            }
-            else {
-                const shortestPath = global.graph.path(reqOrigin, reqDestination);
-                const flightPlan = await getFlightPlan(shortestPath);
-
-                if (flightPlan.length > 0) {
-                    const newFlightPlan = new FlightPlan({
-                        origin: reqOrigin,
-                        destination: reqDestination,
-                        plan: flightPlan,
+                if (flightPlan.version < global.graphVersion) {
+                    FlightPlan.findOneAndRemove({ origin: reqOrigin, destination: reqDestination }).then(async () => {
+                        const newFlightPlan = await createNewFlightPlan(reqOrigin, reqDestination)
+                        res.json(newFlightPlan);
                     })
-
-                    newFlightPlan.save()
-                        .then(() => {
-                            console.log("New Flight Plan Created")
-                        })
+                }
+                else {
+                    res.json(flightPlan.plan);
                 }
 
-
-                res.json(flightPlan);
             }
-
+            else {
+                const newFlightPlan = await createNewFlightPlan(reqOrigin, reqDestination);
+                res.json(newFlightPlan);
+            }
         })
 
 
 })
+
+const createNewFlightPlan = async (reqOrigin, reqDestination) => {
+    const shortestPath = global.graph.path(reqOrigin, reqDestination);
+    const flightPlan = await getFlightPlan(shortestPath);
+
+    if (flightPlan.length > 0) {
+        const newFlightPlan = new FlightPlan({
+            origin: reqOrigin,
+            destination: reqDestination,
+            plan: flightPlan,
+            version: global.graphVersion
+        })
+
+        newFlightPlan.save()
+            .then(() => {
+                console.log("New Flight Plan Created")
+            })
+    }
+
+    return flightPlan;
+}
 
 
 const getFlightPlan = async (shortestPath) => {
@@ -94,6 +109,13 @@ const getCitiesFlight = () => {
 
 getCitiesFlight();
 
+const setGraphVersion = () => {
+    FlightPlan.findOne().sort({ version: -1 })
+        .then((flightplan) => {
+            global.graphVersion = flightplan.version;
+        })
+}
+
 const generateGraph = (cities, flights) => {
     const tempGraph = new Map();
     for (let i = 0; i < cities.length; i++) {
@@ -108,6 +130,7 @@ const generateGraph = (cities, flights) => {
         }
     }
     global.graph = new Graph(tempGraph);
+    setGraphVersion()
 }
 
 const updateGraph = (flight) => {
@@ -139,6 +162,7 @@ router.route('/create').post((req, res) => {
     newFlight.save()
         .then((flight) => {
             updateGraph(flight);
+            global.graphVersion++;
             res.json(flight);
         })
         .catch(err => { res.status(400).json('Error ' + err) })
@@ -148,6 +172,7 @@ router.route('/:id').delete((req, res) => {
     Flight.findByIdAndDelete(req.params.id)
         .then((flight) => {
             updateGraph(flight);
+            global.graphVersion++;
             res.json(flight)
         })
         .catch(err => res.status(400).json('Error ' + err))
@@ -160,6 +185,7 @@ router.route('/:id').patch((req, res) => {
     Flight.findOneAndUpdate(query, update, options)
         .then((flight) => {
             updateGraph(flight);
+            global.graphVersion++;
             res.json(flight)
         })
         .catch(err => res.status(400).json('Error ' + err))
