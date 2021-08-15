@@ -20,9 +20,11 @@ connection.once('open', () => {
 
 const flightsRouter = require('./routes/flights');
 const citiesRouter = require('./routes/cities');
+const flightPlanRouter = require('./routes/flightPlan');
 
 app.use('/flights', flightsRouter);
 app.use('/cities', citiesRouter);
+app.use('/flightplan', flightPlanRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);

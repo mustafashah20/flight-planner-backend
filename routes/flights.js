@@ -3,6 +3,7 @@ const Graph = require('node-dijkstra');
 
 let City = require('../models/cities.model');
 let Flight = require('../models/flights.model');
+let FlightPlan = require('../models/flightPlan.model');
 
 global.graph;
 
@@ -21,13 +22,39 @@ router.route('/:id').get((req, res) => {
 })
 
 router.route('/plan/:origin/:destination').get(async (req, res) => {
-    const origin = req.params.origin;
-    const destination = req.params.destination;
-    const shortestPath = global.graph.path(origin, destination);
-    const flightPlan = await getFlightPlan(shortestPath);
-    res.json(flightPlan);
+    const reqOrigin = req.params.origin;
+    const reqDestination = req.params.destination;
+    FlightPlan.findOne({ origin: reqOrigin, destination: reqDestination })
+        .then(async (flightPlan) => {
+            if (flightPlan) {
+                res.json(flightPlan.plan);
+            }
+            else {
+                const shortestPath = global.graph.path(reqOrigin, reqDestination);
+                const flightPlan = await getFlightPlan(shortestPath);
+
+                if (flightPlan.length > 0) {
+                    const newFlightPlan = new FlightPlan({
+                        origin: reqOrigin,
+                        destination: reqDestination,
+                        plan: flightPlan,
+                    })
+
+                    newFlightPlan.save()
+                        .then(() => {
+                            console.log("New Flight Plan Created")
+                        })
+                }
+
+
+                res.json(flightPlan);
+            }
+
+        })
+
 
 })
+
 
 const getFlightPlan = async (shortestPath) => {
     const flightPlan = [];
