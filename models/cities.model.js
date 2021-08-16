@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const Schema = mongoose.Schema;
 
+//schema for cities containing name
 const citiesSchema = new Schema({
     name: { type: String, required: true }
 });

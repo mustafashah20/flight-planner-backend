@@ -2,12 +2,14 @@ const router = require('express').Router();
 
 let FlightPlan = require('../models/flightPlan.model');
 
+//endpoint for getting flight plans from database
 router.route('/').get((req, res) => {
     FlightPlan.find()
         .then((flightPlan) => res.json(flightPlan))
         .catch(err => res.status(400).json('Error ' + err))
 })
 
+//endpoint for creating flight plan document in database
 router.route('/create').post((req, res) => {
 
     const origin = req.body.origin;
@@ -27,6 +29,7 @@ router.route('/create').post((req, res) => {
         .catch(err => { res.status(400).json('Error ' + err) })
 });
 
+//endpoint for removing flight plan document from database
 router.route('/:id').delete((req, res) => {
     FlightPlan.findByIdAndDelete(req.params.id)
         .then((flight) => {
@@ -35,6 +38,7 @@ router.route('/:id').delete((req, res) => {
         .catch(err => res.status(400).json('Error ' + err))
 });
 
+//endpoint for updating flight plan document in database
 router.route('/:id').patch((req, res) => {
     const query = { _id: req.params.id }
     const update = { $set: req.body };
