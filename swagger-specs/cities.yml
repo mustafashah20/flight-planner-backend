@@ -1,0 +1,98 @@
+components:
+  schemas:
+    City:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+          description: The auto generated id
+        name:
+          type: string
+          description: The city name
+      example:
+        name: Gujranwala
+tags:
+  name: Cities
+  description: The cities managing API
+paths:
+  /cities:
+    get:
+      summary: Returns the list of cities
+      tags: [Cities]
+      responses:
+        200:
+          description: The list of cities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/City"
+  /cities/create:
+    post:
+      summary: Create new city
+      tags: [Cities]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/City"
+      responses:
+        200:
+          description: The city was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        500:
+          description: Some server error
+  /cities/{id}:
+    delete:
+      summary: Remove the city by id
+      tags: [Cities]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The city id
+      responses:
+        200:
+          description: The city was deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        404:
+          description: The city was not found
+    patch:
+      summary: Update the city by id
+      tags: [Cities]
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: The city id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/City"
+      responses:
+        200:
+          description: The city was updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/City"
+        404:
+          description: The city was not found
+        500:
+          description: Some server error

@@ -8,93 +8,6 @@ let FlightPlan = require('../models/flightPlan.model');
 global.graph; //global variable for graph
 global.graphVersion = 0; //global variable for graph version
 
-/**
- * @swagger
- * components:
- *    schemas:
- *      Flight:
- *          type: object
- *          required:
- *              - origin
- *              - destination
- *              - cost
- *          properties:
- *              id:
- *                  type: string
- *                  description: The auto generated id
- *              origin:
- *                  type: string
- *                  description: The origin of flight
- *              destination:
- *                  type: string
- *                  description: The destination of flight
- *              cost:
- *                  type: number
- *                  description: The cost of flight
- *          example:
- *              origin: Islamabad
- *              destination: Lahore
- *              cost: 5000
- */
-
-//endpoint for getting flights from database
-router.route('/').get((req, res) => {
-    Flight.find()
-        .then((flights) => res.json(flights))
-        .catch(err => res.status(400).json('Error ' + err))
-})
-
-//endpoint for getting flight with given ID from database
-router.route('/:id').get((req, res) => {
-    Flight.findOne({
-        _id: req.params.id
-    })
-        .then((flight) => res.json(flight))
-        .catch(err => res.status(400).json('Error ' + err))
-})
-
-//endpoint for getting flight plan.
-//gets flight plan from database if present.
-//generates plan if new flight plan is requested.
-router.route('/plan/:origin/:destination').get(async (req, res) => {
-    const reqOrigin = req.params.origin;
-    const reqDestination = req.params.destination;
-
-    //getting flight plan with provided origin & destination from database
-    FlightPlan.findOne({ origin: reqOrigin, destination: reqDestination })
-        .then(async (flightPlan) => {
-            //checking if flight plan is returned 
-            if (flightPlan) {
-                
-                //checking if returned flight plan has version lower than global graph
-                if (flightPlan.version < global.graphVersion) {
-
-                    //removes the redundant flight plan from database
-                    FlightPlan.findOneAndRemove({ origin: reqOrigin, destination: reqDestination }).then(async () => {
-
-                        //creating new flight plan to return as response. 
-                        const newFlightPlan = await createNewFlightPlan(reqOrigin, reqDestination)
-                        res.json(newFlightPlan);
-                    })
-                }
-
-                //checking if returned flight plan has same version as global graph
-                else {
-                    res.json(flightPlan.plan);
-                }
-
-            }
-
-            //creating new flight plan in case null is returned from database
-            else {
-                const newFlightPlan = await createNewFlightPlan(reqOrigin, reqDestination);
-                res.json(newFlightPlan);
-            }
-        })
-
-
-})
-
 //method for creating new flight plan and storing it in database
 const createNewFlightPlan = async (reqOrigin, reqDestination) => {
 
@@ -222,6 +135,62 @@ const updateGraph = (flight) => {
         })
 }
 
+//endpoint for getting flights from database
+router.route('/').get((req, res) => {
+    Flight.find()
+        .then((flights) => res.json(flights))
+        .catch(err => res.status(400).json('Error ' + err))
+})
+
+//endpoint for getting flight with given ID from database
+router.route('/:id').get((req, res) => {
+    Flight.findOne({
+        _id: req.params.id
+    })
+        .then((flight) => res.json(flight))
+        .catch(err => res.status(400).json('Error ' + err))
+})
+
+//endpoint for getting flight plan.
+//gets flight plan from database if present.
+//generates plan if new flight plan is requested.
+router.route('/plan/:origin/:destination').get(async (req, res) => {
+    const reqOrigin = req.params.origin;
+    const reqDestination = req.params.destination;
+
+    //getting flight plan with provided origin & destination from database
+    FlightPlan.findOne({ origin: reqOrigin, destination: reqDestination })
+        .then(async (flightPlan) => {
+            //checking if flight plan is returned 
+            if (flightPlan) {
+                
+                //checking if returned flight plan has version lower than global graph
+                if (flightPlan.version < global.graphVersion) {
+
+                    //removes the redundant flight plan from database
+                    FlightPlan.findOneAndRemove({ origin: reqOrigin, destination: reqDestination }).then(async () => {
+
+                        //creating new flight plan to return as response. 
+                        const newFlightPlan = await createNewFlightPlan(reqOrigin, reqDestination)
+                        res.json(newFlightPlan);
+                    })
+                }
+
+                //checking if returned flight plan has same version as global graph
+                else {
+                    res.json(flightPlan.plan);
+                }
+
+            }
+
+            //creating new flight plan in case null is returned from database
+            else {
+                const newFlightPlan = await createNewFlightPlan(reqOrigin, reqDestination);
+                res.json(newFlightPlan);
+            }
+        })
+})
+
 //endpoint for creating flight document in database
 router.route('/create').post((req, res) => {
 
@@ -243,6 +212,7 @@ router.route('/create').post((req, res) => {
         })
         .catch(err => { res.status(400).json('Error ' + err) })
 });
+
 
 //endpoint for removing flight document from database
 router.route('/:id').delete((req, res) => {
