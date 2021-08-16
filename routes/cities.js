@@ -28,8 +28,6 @@ let City = require('../models/cities.model');
  *  description: The cities managing API
  */
 
-
-
 /**
  * @swagger
  * /cities:
@@ -70,14 +68,13 @@ router.route('/').get((req, res) => {
  *                      $ref: '#/components/schemas/City'
  *      responses:
  *          200:
- *              description: The book was created successfully
+ *              description: The city was created successfully
  *              content: 
  *                  application/json:
  *                      schema:
  *                          $ref: '#/components/schemas/City'
  *          500:
  *              description: Some server error
- * 
  */
 
 //endpoint for creating city document in database

@@ -8,6 +8,35 @@ let FlightPlan = require('../models/flightPlan.model');
 global.graph; //global variable for graph
 global.graphVersion = 0; //global variable for graph version
 
+/**
+ * @swagger
+ * components:
+ *    schemas:
+ *      Flight:
+ *          type: object
+ *          required:
+ *              - origin
+ *              - destination
+ *              - cost
+ *          properties:
+ *              id:
+ *                  type: string
+ *                  description: The auto generated id
+ *              origin:
+ *                  type: string
+ *                  description: The origin of flight
+ *              destination:
+ *                  type: string
+ *                  description: The destination of flight
+ *              cost:
+ *                  type: number
+ *                  description: The cost of flight
+ *          example:
+ *              origin: Islamabad
+ *              destination: Lahore
+ *              cost: 5000
+ */
+
 //endpoint for getting flights from database
 router.route('/').get((req, res) => {
     Flight.find()
