@@ -112,7 +112,9 @@ getCitiesFlight();
 const setGraphVersion = () => {
     FlightPlan.findOne().sort({ version: -1 })
         .then((flightplan) => {
-            global.graphVersion = flightplan.version;
+            if(flightplan){
+                global.graphVersion = flightplan.version;
+            }
         })
 }
 
